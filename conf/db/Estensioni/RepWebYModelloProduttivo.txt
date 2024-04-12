@@ -1,0 +1,4 @@
+<B>2024-04-10 15:44:56</B>
+<BR>Il file <B>YModelloProduttivo.properties</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00014\src\it\biscottificio\thip\datiTecnici\modpro\resources</B><BR>Il file <B>it\biscottificio\thip\datiTecnici\modpro\resourcesYModelloProduttivo.properties</B> è stato copiato nel classpath
+<BR>Il file <B>YModelloProduttivo.properties</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00014\src\it\biscottificio\thip\datiTecnici\modpro\resources</B><BR>Il file <B>it\biscottificio\thip\datiTecnici\modpro\resourcesYModelloProduttivo.properties</B> è stato copiato nel classpath
+<BR><B>Generazione HTML/TFML è completata con successo</B><BR>

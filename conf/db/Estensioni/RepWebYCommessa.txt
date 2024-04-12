@@ -1,0 +1,4 @@
+<B>2024-04-10 14:56:52</B>
+<BR>Il file <B>YCommessa.properties</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00013\src\it\biscottificio\thip\base\commessa\resources</B><BR>Il file <B>it\biscottificio\thip\base\commessa\resourcesYCommessa.properties</B> è stato copiato nel classpath
+<BR>Il file <B>YCommessa.properties</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00013\src\it\biscottificio\thip\base\commessa\resources</B><BR>Il file <B>it\biscottificio\thip\base\commessa\resourcesYCommessa.properties</B> è stato copiato nel classpath
+<BR><B>Generazione HTML/TFML è completata con successo</B><BR>

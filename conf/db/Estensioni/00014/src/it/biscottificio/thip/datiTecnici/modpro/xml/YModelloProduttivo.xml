@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<customization>
+  <formcustomization customizePosition="START_TABBED" customizeName="14">
+    <tab name="cust_tab1" resourceFile="it.biscottificio.thip.datiTecnici.modpro.resources.YModelloProduttivo" resourceID="tab1">
+      <table style="width: 100%;">
+        <tr>
+          <td valign="top">
+            <label classHdr="YModelloProduttivo" classAD="NumeroRicetta"></label>
+          </td>
+          <td valign="top">
+            <textinput name="NumeroRicetta" classAD="NumeroRicetta"/>
+          </td>
+        </tr>
+      </table>
+    </tab>
+  </formcustomization>
+</customization>

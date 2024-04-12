@@ -1,0 +1,6 @@
+<B>2024-04-10 15:44:21</B>
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00014\tddml\14_DROP_YMODPRO.TDDML</B> e' stato generato correttamente.
+<BR>Il dizionario <B>YMODPRO</B> è stato creato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00014\tddml\14_YMODPRO.TDDML</B> e' stato generato correttamente.
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00014\tddml\14_CONSTRAINT.TDDML</B> e' stato generato correttamente.
+<BR><B>La generazione tabella è completata con successo</B><BR>

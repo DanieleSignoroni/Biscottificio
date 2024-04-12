@@ -1,0 +1,8 @@
+<B>2024-04-10 14:56:39</B>
+<BR>Creato un nuovo folder : <B><I>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni</I></B>
+<BR>Il file <B><I>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\TDDML.dtd</I></B> e creato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00013\tddml\13_DROP_YCOMMESSE.TDDML</B> e' stato generato correttamente.
+<BR>Il dizionario <B>YCOMMESSE</B> è stato creato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00013\tddml\13_YCOMMESSE.TDDML</B> e' stato generato correttamente.
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00013\tddml\13_CONSTRAINT.TDDML</B> e' stato generato correttamente.
+<BR><B>La generazione tabella è completata con successo</B><BR>

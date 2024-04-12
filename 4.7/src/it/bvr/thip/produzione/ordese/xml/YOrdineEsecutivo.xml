@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<customization>
+  <formcustomization customizePosition="START_TABBED" customizeName="5">
+    <tab name="cust_tab1" resourceFile="it.bvr.thip.produzione.ordese.resources.YOrdineEsecutivo" resourceID="tab1">
+      <table style="width: 100%;">
+        <tr>
+          <td valign="top">
+            <label classHdr="YOrdineEsecutivo" classAD="Ystatoindustria"></label>
+          </td>
+          <td valign="top">
+            <combobox name="Ystatoindustria" classAD="Ystatoindustria"/>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">
+          </td>
+          <td valign="top">
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">
+          </td>
+          <td valign="top">
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">
+          </td>
+          <td valign="top">
+          </td>
+        </tr>
+      </table>
+    </tab>
+  </formcustomization>
+  <formcustomization customizePosition="multisearchform_EXT"
+        customizeName="F" classHdr="OrdineEsecutivo" classRD="Commessa"
+        specificDOList="it.bvr.thip.produzione.ordese.web.YOrdineEsecutivoCommessaDoList"
+        additionalRestrictConditions="IdAnnoOrdine,IdAnnoOrdine;IdNumeroOrdine,IdNumeroOrdine">
+    </formcustomization>
+</customization>

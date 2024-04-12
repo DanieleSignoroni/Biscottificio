@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE TDDML SYSTEM "../../../TDDML.dtd">
+<TDDML>
+  <!-- YMODPRO (YMODPRO): ModelloProduttivo; -->
+  <CreateTable schema="THIPPERS" name="YMODPRO" shortname="YMODPRO">
+    <Column name="ID_AZIENDA" shortname="ID_AZIENDA" type="char" length="3" nullable="no"/>
+    <Column name="ID_MODELLO" shortname="ID_MODELLO" type="integer" nullable="no"/>
+    <Column name="NUM_RICETTA" shortname="NUM_RICETT" type="integer" nullable="yes"/>
+  </CreateTable>
+  <CreateIndex schema="THIPPERS" name="YMODPRO_I01" tabschema="THIPPERS" tabname="YMODPRO" shortname="YMODPR_I01" unique="yes">
+    <IndexCol name="ID_AZIENDA" order="Asc"/>
+    <IndexCol name="ID_MODELLO" order="Asc"/>
+  </CreateIndex>
+  <AlterTable schema="THIPPERS" name="YMODPRO">
+    <AddPrimaryKey>
+      <PrimaryKey>
+        <ColumnRef name="ID_AZIENDA"/>
+        <ColumnRef name="ID_MODELLO"/>
+      </PrimaryKey>
+    </AddPrimaryKey>
+  </AlterTable>
+  <Comment>
+    <CommentTable schema="THIPPERS" name="YMODPRO" text="ModelloProduttivo">
+      <CommentColumn name="ID_AZIENDA" text="IdAzienda"/>
+      <CommentColumn name="ID_MODELLO" text="Codice"/>
+      <CommentColumn name="NUM_RICETTA" text="Numero ricetta"/>
+    </CommentTable>
+    <CommentIndex schema="THIPPERS" name="YMODPRO_I01" text="Primary Key"/>
+  </Comment>
+  <Grant schema="THIPPERS" name="YMODPRO"/>
+</TDDML>
