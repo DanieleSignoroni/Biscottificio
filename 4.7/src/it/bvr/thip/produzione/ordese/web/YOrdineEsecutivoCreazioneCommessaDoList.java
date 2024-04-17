@@ -30,7 +30,12 @@ import it.thera.thip.produzione.ordese.OrdineEsecutivoTM;
  * <br><br>
  * <b>71XXX	DSSOF3	17/04/2024</b>
  * <p>Prima stesura.<br>
+ *  Questa e' la specificDOList della commessa in creazione ordine esecutivo.<br>
+ *  Nel caso di prodotto finito voglio mostrare solo le commesse che soddisfano i criteri decisi nella personalizzazione.<br>
+ *  Per fare cio' necessito di fare l'esplosione del modello produttivo per cercare i materiali che saranno poi oggetto dell'ordine
+ *  di produzione, e tramite questi andare a controllare se e' presente almeno una commessa compatibile.<br>
  *  
+ *  Anche la data inizio richiesta e' un parametro necessario e obbligatorio.<br>
  * </p>
  */
 
@@ -49,9 +54,9 @@ public class YOrdineEsecutivoCreazioneCommessaDoList extends WebDOList {
 			String idStabilim = values[3];
 			String dominio = values[4];
 			String dataInizio = values[5];
-			if(idArticolo == NULL_VALUE && priorita == NULL_VALUE && idStabilim == NULL_VALUE && dominio == NULL_VALUE && dataInizio == NULL_VALUE) {
+			if(idArticolo == NULL_VALUE || priorita == NULL_VALUE || idStabilim == NULL_VALUE || dominio == NULL_VALUE || dataInizio == NULL_VALUE) {
 				specificWhereClause += " AND ("+CommessaTM.TABLE_NAME+"."+CommessaTM.ID_COMMESSA+" = 'XXXXXX') ";
-			}else{
+			}else {
 				YArticoliDatiInd estensione = YArticoliDatiInd.recuperaEstensioneArticolo(idAzienda, idArticolo);
 				if(estensione != null && estensione.getTipologiaArticolo() == YArticoliDatiInd.NON_SIGNIFICATIVO) {
 					char[] tipi = new char[3]; 
@@ -84,9 +89,9 @@ public class YOrdineEsecutivoCreazioneCommessaDoList extends WebDOList {
 							String IN = getInnPerListaMateriali(idArticoli, OrdineEsecutivoTM.R_ARTICOLO);
 							java.sql.Date limitDate = java.sql.Date.valueOf("9999-12-31");
 							List<String> commesse = YCommessa.listaCommesseCompatibiliOrdiniFiniti(IN,
-									dataIniziosql,
-											limitDate,
-													limitDate);
+									limitDate,
+									limitDate,
+									dataIniziosql);
 							if(!commesse.isEmpty()) {
 								String in = getInCommesse(commesse,CommessaTM.ID_COMMESSA);
 								specificWhereClause += " AND "+CommessaTM.TABLE_NAME+"."+in+" ";
@@ -103,6 +108,7 @@ public class YOrdineEsecutivoCreazioneCommessaDoList extends WebDOList {
 				}
 			}
 		}else {
+			//se non ho piu di quegli attributi passo per evitare exc e nascondo la commessa
 			specificWhereClause += " AND ("+CommessaTM.TABLE_NAME+"."+CommessaTM.ID_COMMESSA+" = 'XXXXXX') ";
 		}
 	}
@@ -125,7 +131,7 @@ public class YOrdineEsecutivoCreazioneCommessaDoList extends WebDOList {
 		modproEsplosione.setApplicaFattoreScarto(true);
 		modproEsplosione.setApplicaEfficienzaRsr(true);
 		modproEsplosione.setRilascioOrdineEsecutivo(true);
-		modproEsplosione.setUsaArticoliWIP(true); //Fix 5814
+		modproEsplosione.setUsaArticoliWIP(true); 
 		modproEsplosione.setLivelloMassimo(1);
 		return modproEsplosione;
 	}

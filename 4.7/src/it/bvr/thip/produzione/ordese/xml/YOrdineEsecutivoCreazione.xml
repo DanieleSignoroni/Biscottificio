@@ -1,6 +1,29 @@
-<formcustomization
+<!-- Attenzione che gli attributi non hanno un senso logico ma sono messi 
+	in questa maniera solo perche' io poi nella DOList riceva i valori degli 
+	attributi di origine, per quelli di destinazione non ho interesse. -->
+<customization>
+	<formcustomization
 		customizePosition="multisearchform_EXT" customizeName="F"
 		classHdr="OrdineEsecutivoCreazione" classRD="Commessa"
 		specificDOList="it.bvr.thip.produzione.ordese.web.YOrdineEsecutivoCreazioneCommessaDoList"
 		additionalRestrictConditions="IdArticolo,IdArticolo;Priorita,IdCliente;IdStabilimento,IdCommessaModello;Dominio,StatoAvanzamento;DateRichieste.StartDate,DataApertura">
 	</formcustomization>
+	<formcustomization customizePosition="ELEMENT"
+		customizeName="10" elementAD="Commessa.Descrizione.Descrizione">
+		<!-- CUST_ADD <tr> -->
+		<tr>
+			<td valign="top">
+				<label classHdr="YOrdineEsecutivoCreazione"
+					classRD="SpecificaProduzione"></label>
+			</td>
+			<td valign="top">
+				<multisearchform name="SpecificaProduzione"
+					classRD="SpecificaProduzione"
+					specificDOList="it.bvr.thip.produzione.ordese.web.YSpecificaProduzioneDoList" 
+					additionalRestrictConditions="IdArticolo,Testo;IdCliente,TitoloSpecifica"/>
+			</td>
+			<!-- CUST_START_REM -->
+		</tr>
+		<!-- CUST_END_REM -->
+	</formcustomization>
+</customization>

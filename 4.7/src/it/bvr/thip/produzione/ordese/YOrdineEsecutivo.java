@@ -12,10 +12,11 @@ import com.thera.thermfw.common.ErrorMessage;
 import com.thera.thermfw.persist.CopyException;
 import com.thera.thermfw.persist.Copyable;
 import com.thera.thermfw.persist.Factory;
+import com.thera.thermfw.persist.KeyHelper;
+import com.thera.thermfw.persist.Proxy;
 
 import it.biscottificio.thip.base.commessa.YCommessa;
 import it.thera.thip.YArticoliDatiInd;
-import it.thera.thip.base.azienda.Azienda;
 import it.thera.thip.produzione.ordese.AttivitaEsecMateriale;
 import it.thera.thip.produzione.ordese.AttivitaEsecutiva;
 import it.thera.thip.produzione.ordese.OrdineEsecutivo;
@@ -30,6 +31,10 @@ import it.thera.thip.produzione.ordese.OrdineEsecutivoTM;
  * <p>Prima stesura.<br>
  *  
  * </p>
+ * <b>71XXX	DSSOF3	17/04/2024</b>
+ * <p>
+ * Aggiungere obbligatorieta' della commessa per articoli finiti.<br>
+ * </p>
  */
 public class YOrdineEsecutivo extends OrdineEsecutivo {
 
@@ -40,12 +45,36 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 
 	protected char iYstatoindustria = DA_ESPORTARE;
 	protected boolean iYcontEsaurImp;
-	
+
+	protected Proxy iSpecificaProduzione = new Proxy(it.bvr.thip.produzione.ordese.YAnagrSpecProd.class);
+
 	public static final String BISC_00002 = "BISC_00002";
+	public static final String BISC_00003 = "BISC_00003";
 
 	public YOrdineEsecutivo() {
+		super();
 		setYstatoindustria(DA_ESPORTARE);
-		setIdAzienda(Azienda.getAziendaCorrente());
+		setAziendaInternal(getIdAzienda());
+	}
+
+	/**
+	 * @author Daniele Signoroni 17/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * E' uno specchio del setIdAziendaInternal padre.<br>
+	 * Putroppo non possiamo fare la super e agire sulla nostra nuova proxy in quanto nelle new() la Proxy non e' ancora stata inizializzata
+	 * e quindi andrebbe in NullPointerException, quindi una volta che i costruttori padri mi hanno valorizzato l'azienda,
+	 * cerco di portarla sulle proxy di questa classe, se ci sono, e se l'azienda e' != null.<br>
+	 * 
+	 * Perfavore non toccare, a meno che il seguente replacement non presenti Proxy.<br>
+	 * </p>
+	 * @param idAzienda
+	 */
+	protected void setAziendaInternal(String idAzienda) {
+		if(idAzienda != null) {
+			String key0 = iSpecificaProduzione.getKey();
+			iSpecificaProduzione.setKey(KeyHelper.replaceTokenObjectKey(key0, 1, idAzienda));
+		}
 	}
 
 	public void setYstatoindustria(char ystatoindustria) {
@@ -56,7 +85,7 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 	public char getYstatoindustria() {
 		return iYstatoindustria;
 	}
-	
+
 	public boolean isYcontEsaurImp() {
 		return iYcontEsaurImp;
 	}
@@ -64,21 +93,73 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 	public void setYcontEsaurImp(boolean iYcontEsaurImp) {
 		this.iYcontEsaurImp = iYcontEsaurImp;
 	}
-	
+
+	public void setSpecificaProduzione(YAnagrSpecProd specificaProduzione) {
+		String oldObjectKey = getKey();
+		String idAzienda = null;
+		if (specificaProduzione != null) {
+			idAzienda = KeyHelper.getTokenObjectKey(specificaProduzione.getKey(), 1);
+		}
+		setIdAziendaInternal(idAzienda);
+		this.iSpecificaProduzione.setObject(specificaProduzione);
+		setDirty();
+		if (!KeyHelper.areEqual(oldObjectKey, getKey())) {
+			setOnDB(false);
+		}
+	}
+
+	public YAnagrSpecProd getSpecificaProduzione() {
+		return (YAnagrSpecProd)iSpecificaProduzione.getObject();
+	}
+
+	public void setSpecificaProduzioneKey(String key) {
+		String oldObjectKey = getKey();
+		iSpecificaProduzione.setKey(key);
+		String idAzienda = KeyHelper.getTokenObjectKey(key, 1);
+		setIdAziendaInternal(idAzienda);
+		setDirty();
+		if (!KeyHelper.areEqual(oldObjectKey, getKey())) {
+			setOnDB(false);
+		}
+	}
+
+	public String getSpecificaProduzioneKey() {
+		return iSpecificaProduzione.getKey();
+	}
+
+	public void setIdSpecificaProduzione(Integer idSpecificaProduzione) {
+		String key = iSpecificaProduzione.getKey();
+		iSpecificaProduzione.setKey(KeyHelper.replaceTokenObjectKey(key , 2, idSpecificaProduzione));
+		setDirty();
+	}
+
+	public Integer getIdSpecificaProduzione() {
+		String key = iSpecificaProduzione.getKey();
+		String objIdSpecificaProduzione = KeyHelper.getTokenObjectKey(key,2);
+		return KeyHelper.stringToIntegerObj(objIdSpecificaProduzione);
+	}
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public Vector checkAll(BaseComponentsCollection components) {
 		Vector errors =  super.checkAll(components);
-		if(!isOnDB()) {
-			ErrorMessage em = checkCommessaPerArticoloFinito();
-			if(em != null) {
-				errors.add(em);
-			}
+		ErrorMessage em = checkPersArticoloFinito();
+		if(em != null) {
+			errors.add(em);
 		}
 		return errors;
 	}
 
-	protected ErrorMessage checkCommessaPerArticoloFinito() {
+	/**
+	 * @author Daniele Signoroni 17/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * Se l'articolo dell'ordine esecutivo e' un finito allora voglio che la commessa sia obbligatoria.<br>
+	 * Se l'articolo dell'ordine esecutivo e' un finito allora voglio che la specifica sia obbligatoria.<br>
+	 * </p>
+	 * @return
+	 */
+	protected ErrorMessage checkPersArticoloFinito() {
 		ErrorMessage em = null;
 		if(getIdArticolo() != null) {
 			YArticoliDatiInd datiExt = YArticoliDatiInd.recuperaEstensioneArticolo(getIdAzienda(), getIdArticolo());
@@ -88,6 +169,9 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 					//devo checkare che quella che ci sia e' corretta
 				}else {
 					em = new ErrorMessage(BISC_00002,"La commessa e' obbligatoria per il prodotto finito");
+				}
+				if(em == null && getSpecificaProduzione() == null) {
+					em = new ErrorMessage(BISC_00003);
 				}
 			}
 		}
