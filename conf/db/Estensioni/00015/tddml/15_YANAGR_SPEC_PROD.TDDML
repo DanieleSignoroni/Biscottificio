@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE TDDML SYSTEM "../../../TDDML.dtd">
+<TDDML>
+  <!-- YANAGR_SPEC_PROD (YANAGR_): Specifiche di produzione; -->
+  <CreateTable schema="THIPPERS" name="YANAGR_SPEC_PROD" shortname="YANAGR_">
+    <Column name="ID_AZIENDA" shortname="ID_AZIENDA" type="char" length="3" nullable="no"/>
+    <Column name="STATO" shortname="STATO" type="char" length="1" nullable="no"/>
+    <Column name="R_UTENTE_CRZ" shortname="R_UTENTE_C" type="char" length="20" nullable="yes"/>
+    <Column name="TIMESTAMP_CRZ" shortname="TIMESTAMP_" type="timestamp" nullable="no" default="CURRENT TIMESTAMP"/>
+    <Column name="R_UTENTE_AGG" shortname="R_UTENTE_A" type="char" length="20" nullable="yes"/>
+    <Column name="TIMESTAMP_AGG" shortname="TIMESTAMP0" type="timestamp" nullable="no" default="CURRENT TIMESTAMP"/>
+    <Column name="ID_SPECIFICA" shortname="ID_SPECIFI" type="integer" nullable="no"/>
+    <Column name="TESTO" shortname="TESTO" type="varchar" length="100" nullable="no"/>
+    <Column name="TITOLO_SPECIFICA" shortname="TITOLO_SPE" type="varchar" length="35" nullable="no"/>
+  </CreateTable>
+  <CreateIndex schema="THIPPERS" name="YANAGR_SPEC_PR_I01" tabschema="THIPPERS" tabname="YANAGR_SPEC_PROD" shortname="YANAGR_I01" unique="yes">
+    <IndexCol name="ID_AZIENDA" order="Asc"/>
+    <IndexCol name="ID_SPECIFICA" order="Asc"/>
+  </CreateIndex>
+  <AlterTable schema="THIPPERS" name="YANAGR_SPEC_PROD">
+    <AddPrimaryKey>
+      <PrimaryKey>
+        <ColumnRef name="ID_AZIENDA"/>
+        <ColumnRef name="ID_SPECIFICA"/>
+      </PrimaryKey>
+    </AddPrimaryKey>
+  </AlterTable>
+  <Comment>
+    <CommentTable schema="THIPPERS" name="YANAGR_SPEC_PROD" text="Specifiche di produzione">
+      <CommentColumn name="ID_AZIENDA" text="Azienda"/>
+      <CommentColumn name="STATO" text="Stato"/>
+      <CommentColumn name="R_UTENTE_CRZ" text="Utente creazione"/>
+      <CommentColumn name="TIMESTAMP_CRZ" text="Timestamp creazione"/>
+      <CommentColumn name="R_UTENTE_AGG" text="Utente ultima modifica"/>
+      <CommentColumn name="TIMESTAMP_AGG" text="Timestamp ultima modifica"/>
+      <CommentColumn name="ID_SPECIFICA" text="Codice specifica"/>
+      <CommentColumn name="TESTO" text="Testo"/>
+      <CommentColumn name="TITOLO_SPECIFICA" text="Titolo Specifica"/>
+    </CommentTable>
+    <CommentIndex schema="THIPPERS" name="YANAGR_SPEC_PR_I01" text="Primary Key"/>
+  </Comment>
+  <Grant schema="THIPPERS" name="YANAGR_SPEC_PROD"/>
+</TDDML>

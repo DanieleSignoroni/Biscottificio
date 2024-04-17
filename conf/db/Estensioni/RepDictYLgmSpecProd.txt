@@ -1,0 +1,6 @@
+<B>2024-04-16 14:22:32</B>
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00016\tddml\16_DROP_YLGM_SPEC_PROD.TDDML</B> e' stato generato correttamente.
+<BR>Il dizionario <B>YLGM_SPEC_PROD</B> è stato creato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00016\tddml\16_YLGM_SPEC_PROD.TDDML</B> e' stato generato correttamente.
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00016\tddml\16_CONSTRAINT.TDDML</B> e' stato generato correttamente.
+<BR><B>La generazione tabella è completata con successo</B><BR>

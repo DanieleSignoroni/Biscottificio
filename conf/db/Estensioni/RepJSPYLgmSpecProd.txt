@@ -1,0 +1,3 @@
+<B>2024-04-16 14:22:40</B>
+<BR>Il file <B>YLgmSpecProd.jsp</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00016\websrc\it\bvr\thip\produzione\ordese</B><BR>Il file <B>YLgmSpecProd.jsp</B> è stato copiato nel classpath
+<BR><B>Generazione JSP è completata con successo</B><BR>

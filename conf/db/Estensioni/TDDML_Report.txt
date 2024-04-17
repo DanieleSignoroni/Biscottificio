@@ -1,2 +1,4 @@
 
-Elaborazione file comandi W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00014\tddml\14_CONSTRAINT.TDDML.
+Elaborazione file comandi W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00015\tddml\15_CONSTRAINT.TDDML.
+ALTER TABLE THIPPERS.YANAGR_SPEC_PROD ADD CONSTRAINT Azienda_603269911 FOREIGN KEY (ID_AZIENDA)
+        REFERENCES THIP.AZIENDE_ESTESE

@@ -4,8 +4,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Vector;
 
 import com.thera.thermfw.base.Trace;
+import com.thera.thermfw.common.BaseComponentsCollection;
+import com.thera.thermfw.common.ErrorMessage;
 import com.thera.thermfw.persist.CopyException;
 import com.thera.thermfw.persist.Copyable;
 import com.thera.thermfw.persist.Factory;
@@ -16,13 +19,14 @@ import it.thera.thip.base.azienda.Azienda;
 import it.thera.thip.produzione.ordese.AttivitaEsecMateriale;
 import it.thera.thip.produzione.ordese.AttivitaEsecutiva;
 import it.thera.thip.produzione.ordese.OrdineEsecutivo;
+import it.thera.thip.produzione.ordese.OrdineEsecutivoTM;
 
 /**
  * <h1>Softre Solutions</h1>
  * <br>
  * @author Daniele Signoroni 10/04/2024
  * <br><br>
- * <b>71XXX	DSSOF3	10/04/2024</b>
+ * <b>71501	DSSOF3	10/04/2024</b>
  * <p>Prima stesura.<br>
  *  
  * </p>
@@ -35,6 +39,9 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 	public static final char DA_NON_ESPORTARE = '9';
 
 	protected char iYstatoindustria = DA_ESPORTARE;
+	protected boolean iYcontEsaurImp;
+	
+	public static final String BISC_00002 = "BISC_00002";
 
 	public YOrdineEsecutivo() {
 		setYstatoindustria(DA_ESPORTARE);
@@ -48,6 +55,43 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 
 	public char getYstatoindustria() {
 		return iYstatoindustria;
+	}
+	
+	public boolean isYcontEsaurImp() {
+		return iYcontEsaurImp;
+	}
+
+	public void setYcontEsaurImp(boolean iYcontEsaurImp) {
+		this.iYcontEsaurImp = iYcontEsaurImp;
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	public Vector checkAll(BaseComponentsCollection components) {
+		Vector errors =  super.checkAll(components);
+		if(!isOnDB()) {
+			ErrorMessage em = checkCommessaPerArticoloFinito();
+			if(em != null) {
+				errors.add(em);
+			}
+		}
+		return errors;
+	}
+
+	protected ErrorMessage checkCommessaPerArticoloFinito() {
+		ErrorMessage em = null;
+		if(getIdArticolo() != null) {
+			YArticoliDatiInd datiExt = YArticoliDatiInd.recuperaEstensioneArticolo(getIdAzienda(), getIdArticolo());
+			if(datiExt != null && datiExt.getTipologiaArticolo() == YArticoliDatiInd.NON_SIGNIFICATIVO) {
+				//e' un finito e quindi voglio che ci sia la commessa
+				if(getIdCommessa() != null) {
+					//devo checkare che quella che ci sia e' corretta
+				}else {
+					em = new ErrorMessage(BISC_00002,"La commessa e' obbligatoria per il prodotto finito");
+				}
+			}
+		}
+		return em;
 	}
 
 	@Override
@@ -92,6 +136,16 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 		}
 	}
 
+	/**
+	 * @author Daniele Signoroni 12/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * Dato un ordine esecutivo e un nome di colonna ritorna la IN per il codice articolo del materiale.<br>
+	 * </p>
+	 * @param ordEsec
+	 * @param columnName dovrebbe essere sempre e solo {@value OrdineEsecutivoTM#R_ARTICOLO}
+	 * @return una IN con la lista degli articoli, se non ci sono materiali o l'ordine e' null una stringa vuota
+	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static String getInnPerListaMateriali(OrdineEsecutivo ordEsec, String columnName) {
 		StringBuilder IN = new StringBuilder();
@@ -107,16 +161,24 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 				}
 			}
 			IN.append(")");
-		} else {
-			IN.append(columnName).append(" IN ()");
 		}
-
 		return IN.toString();
 	}
 
+	/**
+	 * @author Daniele Signoroni 12/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * Dato un ordine esecutivo ritorna la lista dei materiali.<br>
+	 * </p>
+	 * @param ordine, se null ritorna una lista vuota
+	 * @return
+	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static List getListaMateriali(OrdineEsecutivo ordine){
 		List<AttivitaEsecMateriale> materiali = new ArrayList<AttivitaEsecMateriale>();
+		if(ordine == null)
+			return materiali;
 		List attivitaList = ordine.getAttivitaEsecutive();
 		if (attivitaList.size() >= 1) {
 			for (int i = 0; i < attivitaList.size(); i++) {

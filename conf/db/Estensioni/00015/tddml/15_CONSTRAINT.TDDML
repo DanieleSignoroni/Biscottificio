@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE TDDML SYSTEM "../../../TDDML.dtd">
+<TDDML>
+  <!-- YANAGR_SPEC_PROD (YANAGR_) -->
+  <AlterTable schema="THIPPERS" name="YANAGR_SPEC_PROD">
+    <AddConstraint>
+      <Constraint name="Azienda_603269911" refschema="THIP" reftable="AZIENDE_ESTESE" schema="THIPPERS" ondelete="Restrict">
+        <ColumnRef name="ID_AZIENDA"/>
+      </Constraint>
+    </AddConstraint>
+  </AlterTable>
+</TDDML>

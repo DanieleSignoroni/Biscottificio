@@ -1,0 +1,7 @@
+<B>2024-04-16 14:22:39</B>
+<BR>Il file <B>YLgmSpecProd.html</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00016\websrc\it\bvr\thip\produzione\ordese</B><BR>Il file <B>YLgmSpecProd.html</B> è stato copiato nel classpath
+<BR>Il file <B>YLgmSpecProd.tfml</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00016\websrc\it\bvr\thip\produzione\ordese</B><BR>Il file <B>YLgmSpecProd.tfml</B> è stato copiato nel classpath
+<BR>Il file <B>YLgmSpecProd.js</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00016\websrc\it\bvr\thip\produzione\ordese</B><BR>Il file <B>YLgmSpecProd.js</B> è stato copiato nel classpath
+<BR>Il file <B>YLgmSpecProd.properties</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00016\src\it\bvr\thip\produzione\ordese\resources</B><BR>Il file <B>it\bvr\thip\produzione\ordese\resourcesYLgmSpecProd.properties</B> è stato copiato nel classpath
+<BR>Il file <B>YLgmSpecProd.properties</B> è stato generato correttamente nel cartela <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00016\src\it\bvr\thip\produzione\ordese\resources</B><BR>Il file <B>it\bvr\thip\produzione\ordese\resourcesYLgmSpecProd.properties</B> è stato copiato nel classpath
+<BR><B>Generazione HTML/TFML è completata con successo</B><BR>

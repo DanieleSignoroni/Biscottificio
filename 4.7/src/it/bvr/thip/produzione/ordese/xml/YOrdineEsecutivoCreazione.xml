@@ -1,0 +1,6 @@
+<formcustomization
+		customizePosition="multisearchform_EXT" customizeName="F"
+		classHdr="OrdineEsecutivoCreazione" classRD="Commessa"
+		specificDOList="it.bvr.thip.produzione.ordese.web.YOrdineEsecutivoCreazioneCommessaDoList"
+		additionalRestrictConditions="IdArticolo,IdArticolo;Priorita,IdCliente;IdStabilimento,IdCommessaModello;Dominio,StatoAvanzamento;DateRichieste.StartDate,DataApertura">
+	</formcustomization>

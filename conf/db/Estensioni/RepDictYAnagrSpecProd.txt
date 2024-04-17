@@ -1,0 +1,8 @@
+<B>2024-04-16 15:12:14</B>
+<BR>Il dizionario <B>YLGM_SPEC_PROD</B> è stato cancellato
+<BR>Il dizionario <B>YANAGR_SPEC_PROD</B> è stato cancellato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00015\tddml\15_DROP_YANAGR_SPEC_PROD.TDDML</B> e' stato generato correttamente.
+<BR>Il dizionario <B>YANAGR_SPEC_PROD</B> è stato creato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00015\tddml\15_YANAGR_SPEC_PROD.TDDML</B> e' stato generato correttamente.
+<BR>Il file <B>W:\PthDev\Projects\Panthera\BiscottificioVerona\conf\db\Estensioni\00015\tddml\15_CONSTRAINT.TDDML</B> e' stato generato correttamente.
+<BR><B>La generazione tabella è completata con successo</B><BR>
