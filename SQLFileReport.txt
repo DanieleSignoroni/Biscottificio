@@ -1,6 +1,0 @@
-*******************************************************
-PER TROVARE GLI ERRORI, CERCARE LA STRINGA #ERRORE#
-PER TROVARE I WARNING, CERCARE LA STRINGA #WARNING#
-PER TROVARE I DUPLICATI, CERCARE LA STRINGA #DUPLICATO#
-*******************************************************
-----------------------------------------------------------

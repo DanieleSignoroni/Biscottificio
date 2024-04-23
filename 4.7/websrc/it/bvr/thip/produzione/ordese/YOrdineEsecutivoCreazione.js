@@ -2,6 +2,7 @@ var oldOrdineEsecutivoCreazioneOL = OrdineEsecutivoCreazioneOL;
 
 OrdineEsecutivoCreazioneOL = function() {
 	oldOrdineEsecutivoCreazioneOL();
+	//Remmare per gestire la commessa in nuovo
 	//	var idCommessa = eval("document.forms[0]." + idFromName['IdCommessa']);
 	//	idCommessa.readOnly = true;
 	//	idCommessa.style.background = bCo;

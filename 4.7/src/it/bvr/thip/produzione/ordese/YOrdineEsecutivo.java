@@ -45,7 +45,9 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 
 	protected char iYstatoindustria = DA_ESPORTARE;
 	protected boolean iYcontEsaurImp;
-
+	
+	protected boolean isInCopia = false;
+	
 	protected Proxy iSpecificaProduzione = new Proxy(it.bvr.thip.produzione.ordese.YAnagrSpecProd.class);
 
 	public static final String BISC_00002 = "BISC_00002";
@@ -62,16 +64,16 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 	 * <p>
 	 * Prima stesura.<br>
 	 * E' uno specchio del setIdAziendaInternal padre.<br>
-	 * Putroppo non possiamo fare la super e agire sulla nostra nuova proxy in quanto nelle new() la Proxy non e' ancora stata inizializzata
+	 * Putroppo non possiamo fare l'override e agire sulla nostra nuova proxy in quanto nelle new() le Proxy di questa classe non sono state ancora inizializzate
 	 * e quindi andrebbe in NullPointerException, quindi una volta che i costruttori padri mi hanno valorizzato l'azienda,
-	 * cerco di portarla sulle proxy di questa classe, se ci sono, e se l'azienda e' != null.<br>
+	 * cerco di portarla sulle proxy di questa classe, se ci sono, e se l'azienda e' != null.<br></br>
 	 * 
 	 * Perfavore non toccare, a meno che il seguente replacement non presenti Proxy.<br>
 	 * </p>
 	 * @param idAzienda
 	 */
 	protected void setAziendaInternal(String idAzienda) {
-		if(idAzienda != null) {
+		if(idAzienda != null) { //all'avvio e' null
 			String key0 = iSpecificaProduzione.getKey();
 			iSpecificaProduzione.setKey(KeyHelper.replaceTokenObjectKey(key0, 1, idAzienda));
 		}
@@ -138,6 +140,10 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 		String objIdSpecificaProduzione = KeyHelper.getTokenObjectKey(key,2);
 		return KeyHelper.stringToIntegerObj(objIdSpecificaProduzione);
 	}
+	
+	public boolean isInCopia() {
+		return isInCopia;
+	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
@@ -161,6 +167,9 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 	 */
 	protected ErrorMessage checkPersArticoloFinito() {
 		ErrorMessage em = null;
+		if(isInCopia()) {
+			return em;
+		}
 		if(getIdArticolo() != null) {
 			YArticoliDatiInd datiExt = YArticoliDatiInd.recuperaEstensioneArticolo(getIdAzienda(), getIdArticolo());
 			if(datiExt != null && datiExt.getTipologiaArticolo() == YArticoliDatiInd.NON_SIGNIFICATIVO) {
