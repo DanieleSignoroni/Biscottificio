@@ -1,5 +1,6 @@
 package it.bvr.thip.produzione.ordese;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,6 +25,8 @@ import com.thera.thermfw.persist.Proxy;
 import it.biscottificio.thip.base.commessa.YCommessa;
 import it.thera.thip.YArticoliDatiInd;
 import it.thera.thip.base.azienda.Azienda;
+import it.thera.thip.base.generale.CategoriaUM;
+import it.thera.thip.base.generale.CategoriaUMUM;
 import it.thera.thip.produzione.ordese.AttivitaEsecMateriale;
 import it.thera.thip.produzione.ordese.AttivitaEsecutiva;
 import it.thera.thip.produzione.ordese.OrdineEsecutivo;
@@ -53,8 +56,6 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 			+ "WHERE "+YOrdineEsecutivoTM.ID_AZIENDA+" = ? "
 			+ "AND "+YOrdineEsecutivoTM.ID_ANNO_ORD+" = ? "
 			+ "AND "+YOrdineEsecutivoTM.ID_NUMERO_ORD+" = ? ";
-
-	protected static CachedStatement csUpdtStatoIndustria = new CachedStatement(STMT_UPD_STATO_INDUSTRIA);
 
 	//YStatoIndustria --> Attribute.Ref = Ystatoindustria4.0
 	public static final char DA_ESPORTARE = '0';
@@ -359,6 +360,58 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 	 * @author Daniele Signoroni 24/04/2024
 	 * <p>
 	 * Prima stesura.<br>
+	 * Recupera la somma dei kg dei materiali di un ordine impasto.<br>
+	 * Se il materiale non e' in kg, la sua quantita viene convertita.<br>
+	 * </p>
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public float getSommaKgMaterialiImpasto() {
+		float kgTot = 0;
+		List<AttivitaEsecMateriale> materiali = getListaMateriali(this);
+		for(AttivitaEsecMateriale materiale : materiali) {
+			BigDecimal quantitaRichiesta = materiale.getQtaRichiestaUMPrm();
+			if(!materiale.getIdUMPrmMag().equals("kg")) {
+				try {
+					CategoriaUM cat = (CategoriaUM) CategoriaUM.elementWithKey(CategoriaUM.class,
+							KeyHelper.buildObjectKey(new String[] {
+									getIdAzienda(),
+									"UMP"
+							}), PersistentObject.NO_LOCK);
+					if(cat != null) {
+						BigDecimal fttCNV = null;
+						char operCnv = ' ';
+						for(Object umAssociata : cat.getUMAssociate()) {
+							if(((CategoriaUMUM)umAssociata).getIdUnitaMisura().equals("kg")) {
+								fttCNV = ((CategoriaUMUM)umAssociata).getFattoreConverUM();
+								operCnv = ((CategoriaUMUM)umAssociata).getOperConverUM();
+							}
+						}
+						if(fttCNV != null) {
+							switch (operCnv) {
+							case CategoriaUMUM.DIVIDERE:
+								quantitaRichiesta = quantitaRichiesta.divide(fttCNV, fttCNV.scale(), BigDecimal.ROUND_HALF_UP);
+								break;
+							case CategoriaUMUM.MOLTIPLICARE:
+								quantitaRichiesta = quantitaRichiesta.multiply(fttCNV);
+							default:
+								break;
+							}
+						}
+					}
+				}catch (SQLException e) {
+					e.printStackTrace(Trace.excStream);
+				}
+			}
+			kgTot = kgTot + quantitaRichiesta.floatValue();
+		}
+		return kgTot;
+	}
+
+	/**
+	 * @author Daniele Signoroni 24/04/2024
+	 * <p>
+	 * Prima stesura.<br>
 	 * Ritorna una lista di ordini esecutivi da esportare verso le tabelle del MES.<br>
 	 * </p>
 	 * @return
@@ -425,7 +478,7 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 		if(statoIndustria == DA_ESPORTARE || statoIndustria == DA_NON_ESPORTARE || statoIndustria == ESPORTATO) {
 			PreparedStatement ps = null;
 			try {
-				ps = csUpdtStatoIndustria.getStatement();
+				ps = new CachedStatement(STMT_UPD_STATO_INDUSTRIA).getStatement();
 				Database db = ConnectionManager.getCurrentDatabase();
 
 				db.setString(ps, 1, String.valueOf(statoIndustria));                             
@@ -452,6 +505,21 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 			throw new IllegalArgumentException("Riferimento attributo Ystatoindustria4.0: Valore \"" + statoIndustria + "\" non trovato."); 
 		}
 		return UPDATE_KO;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static OrdineEsecutivo recuperaOrdineEsecutivoDaNumeroFMT(String rif_ODP) {
+		OrdineEsecutivo ord = null;
+		String where = " "+OrdineEsecutivoTM.ID_AZIENDA+" = '"+Azienda.getAziendaCorrente()+"' AND "+OrdineEsecutivoTM.NUMERO_ORD_FMT+" = '"+rif_ODP+"' ";
+		try {
+			Vector<OrdineEsecutivo> ords = OrdineEsecutivo.retrieveList(OrdineEsecutivo.class, where, "", false);
+			if(ords.size() == 1) {
+				ord = ords.get(0);
+			}
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | SQLException e) {
+			e.printStackTrace(Trace.excStream);
+		}
+		return ord;
 	}
 
 }

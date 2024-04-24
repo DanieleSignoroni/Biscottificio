@@ -3,8 +3,16 @@ package it.bvr.thip.produzione.ordese;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
+
+import com.thera.thermfw.base.Trace;
+import com.thera.thermfw.persist.ConnectionDescriptor;
 
 /**
  * 
@@ -29,16 +37,32 @@ public class TblProduzione {
 
 	public static final String TABLE_NAME = "Tbl_Produzione";
 
+	private static final String STMT_INSERT_TESTATA = "INSERT INTO "+TABLE_NAME+" "
+			+ "           (DataOra "
+			+ "           ,Turno "
+			+ "           ,Lotto "
+			+ "           ,CodArticolo "
+			+ "           ,DescImpasto "
+			+ "           ,Ricetta "
+			+ "           ,CodImpasto "
+			+ "           ,\"Qt.Cartoni\" "
+			+ "           ,Qt_CartoniProdotti "
+			+ "           ,KgImpasto "
+			+ "           ,Rif_ODP "
+			+ "           ,Flag) "
+			+ "     VALUES "
+			+ "           (?,?,?,?,?,?,?,?,?,?,?,?) ";
+
 	protected BigInteger id;
 	protected Date DataOra;
-	protected int Turno;
+	protected Integer Turno;
 	protected String Lotto;
 	protected String CodArticolo;
 	protected String DescImpasto;
-	protected int Ricetta;
+	protected Integer Ricetta;
 	protected String CodImpasto;
-	protected int QtCartoni;
-	protected int QtCartoniProdotti;
+	protected Integer QtCartoni;
+	protected Integer QtCartoniProdotti;
 	protected float KgImpasto;
 	protected String Rif_ODP;
 	protected char Flag;
@@ -63,10 +87,10 @@ public class TblProduzione {
 	public void setDataOra(Date dataOra) {
 		DataOra = dataOra;
 	}
-	public int getTurno() {
+	public Integer getTurno() {
 		return Turno;
 	}
-	public void setTurno(int turno) {
+	public void setTurno(Integer turno) {
 		Turno = turno;
 	}
 	public String getLotto() {
@@ -87,10 +111,10 @@ public class TblProduzione {
 	public void setDescImpasto(String descImpasto) {
 		DescImpasto = descImpasto;
 	}
-	public int getRicetta() {
+	public Integer getRicetta() {
 		return Ricetta;
 	}
-	public void setRicetta(int ricetta) {
+	public void setRicetta(Integer ricetta) {
 		Ricetta = ricetta;
 	}
 	public String getCodImpasto() {
@@ -99,16 +123,16 @@ public class TblProduzione {
 	public void setCodImpasto(String codImpasto) {
 		CodImpasto = codImpasto;
 	}
-	public int getQtCartoni() {
+	public Integer getQtCartoni() {
 		return QtCartoni;
 	}
-	public void setQtCartoni(int qtCartoni) {
+	public void setQtCartoni(Integer qtCartoni) {
 		QtCartoni = qtCartoni;
 	}
-	public int getQtCartoniProdotti() {
+	public Integer getQtCartoniProdotti() {
 		return QtCartoniProdotti;
 	}
-	public void setQtCartoniProdotti(int qtCartoniProdotti) {
+	public void setQtCartoniProdotti(Integer qtCartoniProdotti) {
 		QtCartoniProdotti = qtCartoniProdotti;
 	}
 	public float getKgImpasto() {
@@ -158,6 +182,80 @@ public class TblProduzione {
 			}
 		}
 		return val;
+	}
+
+	/**
+	 * @author Daniele Signoroni 24/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * Filtra i dettagli passati ai soli che hanno come Riferimento_Tbl_Produzione il riferimento passato.
+	 * </p>
+	 * @param dettagli
+	 * @param riferimento
+	 * @return
+	 */
+	public static List<TblDettaglioProduzione> searchDettagliByRifTblProduzione(List<TblDettaglioProduzione> dettagli, String riferimento) {
+		return dettagli.stream()
+				.filter(dettaglio -> riferimento.equals(dettaglio.getRiferimento_Tbl_Produzione()))
+				.collect(Collectors.toList());
+	}
+
+	public int getSommaQuantitaCartoniDettagli(ToIntFunction<TblDettaglioProduzione> fieldExtractor) {
+		return dettagli.stream()
+				.mapToInt(fieldExtractor)
+				.sum();
+	}
+
+	/**
+	 * @author Daniele Signoroni 24/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 *
+	 * </p>
+	 * @param descrittoreConnessioneEsterna
+	 * @return
+	 */
+	public int esportaVersoTabellaDiFrontiera(ConnectionDescriptor descrittoreConnessioneEsterna) {
+		int rc = 0;
+		try {
+			descrittoreConnessioneEsterna.openConnection();
+			PreparedStatement ps1 = descrittoreConnessioneEsterna.getConnection().prepareStatement(STMT_INSERT_TESTATA);
+			ps1.setDate(1, getDataOra());
+			if (getTurno() != null) {
+				ps1.setInt(2, getTurno());
+			} else {
+				ps1.setNull(2, Types.INTEGER);
+			}
+			ps1.setString(3, getLotto());
+			ps1.setString(4, getCodArticolo());
+			ps1.setString(5, getDescImpasto());
+			if (getRicetta() != null) {
+				ps1.setInt(6, getRicetta());
+			} else {
+				ps1.setInt(6, 0);
+			}
+			ps1.setString(7, getCodImpasto());
+			ps1.setInt(8, getQtCartoni());
+			ps1.setNull(9, Types.INTEGER);
+			ps1.setFloat(10, getKgImpasto());
+			ps1.setString(11, getRif_ODP());
+			ps1.setString(12, String.valueOf(getFlag()));
+			rc = ps1.executeUpdate();
+			if(rc > 0) {
+				for(TblDettaglioProduzione dettaglio : getDettagli()) {
+					rc = dettaglio.esportaVersoTabellaDiFrontiera(descrittoreConnessioneEsterna);
+					if(rc == YOrdineEsecutivo.UPDATE_KO) {
+						return YOrdineEsecutivo.UPDATE_KO;
+					}
+				}
+			}else {
+				return YOrdineEsecutivo.UPDATE_KO;
+			}
+		}catch (SQLException e) {
+			e.printStackTrace(Trace.excStream);
+			return YOrdineEsecutivo.UPDATE_KO;
+		}
+		return YOrdineEsecutivo.UPDATE_OK;
 	}
 
 }

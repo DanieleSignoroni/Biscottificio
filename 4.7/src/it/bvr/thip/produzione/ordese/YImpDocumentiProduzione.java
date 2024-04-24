@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.batch.BatchRunnable;
@@ -24,8 +23,6 @@ import it.thera.thip.nicim.interfacce.InterfacciaConsNic;
 import it.thera.thip.nicim.interfacce.InterfacciaStdNICIM;
 import it.thera.thip.produzione.ordese.AttivitaEsecRisorsa;
 import it.thera.thip.produzione.ordese.AttivitaEsecutiva;
-import it.thera.thip.produzione.ordese.OrdineEsecutivo;
-import it.thera.thip.produzione.ordese.OrdineEsecutivoTM;
 import it.thera.thip.vendite.proposteEvasione.CreaMessaggioErrore;
 
 /**
@@ -104,8 +101,9 @@ public class YImpDocumentiProduzione extends BatchRunnable implements Authorizab
 				output.println(" ** Non sono presenti record in stato TERMINATO...");
 			}
 			for(TblProduzione testata : testate) {
+				output.println();
 				output.println(" --> Processo la testata {"+testata.getId()+"}, la testata ha :"+testata.getDettagli().size()+" dettagli <-- ");
-				OrdineEsecutivo ordEsec = recuperaOrdineEsecutivo(testata.getRif_ODP());
+				YOrdineEsecutivo ordEsec = (YOrdineEsecutivo) YOrdineEsecutivo.recuperaOrdineEsecutivoDaNumeroFMT(testata.getRif_ODP());
 				if(ordEsec != null) {
 					AttivitaEsecutiva atv = ordEsec.getAttivitaEsecutive().size() > 0 ? (AttivitaEsecutiva) ordEsec.getAttivitaEsecutive().get(0) : null; //ne avra' sempre e solo 1
 					if(atv != null) {
@@ -125,6 +123,10 @@ public class YImpDocumentiProduzione extends BatchRunnable implements Authorizab
 						nicCons.setIdRigaOrdine(0);
 						nicCons.setDataRegistrazione(testata.getDataOra());
 						nicCons.setQuantita(testata.getSommaImpastiCartoneDettaglio().doubleValue()); //non so pk lo vuole double ma ok
+						if(nicCons.getQuantita() <= 0) {
+							output.println(" ** Attenzione, la somma delle quantita' e' 0, non importo il consuntivo ... ");
+							continue;
+						}
 						//nicCons.setTempoMacchina(BigDecimal.ONE);
 						nicCons.setIdProgressivo(nicCons.getNuovoProgressivo());
 						double zero = 0;
@@ -134,7 +136,7 @@ public class YImpDocumentiProduzione extends BatchRunnable implements Authorizab
 						}
 						int rc = nicCons.save();
 						if(rc > 0) {
-							//rc = aggiornaFlagTestataRigheTBL(testata);
+							rc = aggiornaFlagTestataRigheTBL(testata);
 							if(rc > 0) {
 								output.println(" -- Record :  "+nicCons.getAbstractTableManager().getMainTableName()+", {"+nicCons.getKey()+"}, salvato correttamente con rc ="+rc);
 
@@ -155,6 +157,7 @@ public class YImpDocumentiProduzione extends BatchRunnable implements Authorizab
 					output.println(" -- Qualcosa e' andato storto nel recuperare l'ordine esecutivo, NUM_ORD_FMT = "+testata.getRif_ODP());
 				}
 				output.println(" --> Ho finito di processare la testata {"+testata.getId()+"}  <-- ");
+				output.println();
 			}
 		} catch (SQLException e) {
 			isOk = false;
@@ -193,21 +196,6 @@ public class YImpDocumentiProduzione extends BatchRunnable implements Authorizab
 			e.printStackTrace(Trace.excStream);
 		}
 		return rc;
-	}
-
-	@SuppressWarnings("unchecked")
-	protected OrdineEsecutivo recuperaOrdineEsecutivo(String rif_ODP) {
-		OrdineEsecutivo ord = null;
-		String where = " "+OrdineEsecutivoTM.ID_AZIENDA+" = '"+Azienda.getAziendaCorrente()+"' AND "+OrdineEsecutivoTM.NUMERO_ORD_FMT+" = '"+rif_ODP+"' ";
-		try {
-			Vector<OrdineEsecutivo> ords = OrdineEsecutivo.retrieveList(OrdineEsecutivo.class, where, "", false);
-			if(ords.size() == 1) {
-				ord = ords.get(0);
-			}
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | SQLException e) {
-			e.printStackTrace(Trace.excStream);
-		}
-		return ord;
 	}
 
 	protected List<TblProduzione> retrieveListTblProduzione() throws SQLException {

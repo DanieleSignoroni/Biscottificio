@@ -3,6 +3,12 @@ package it.bvr.thip.produzione.ordese;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
+
+import com.thera.thermfw.base.Trace;
+import com.thera.thermfw.persist.ConnectionDescriptor;
 
 /**
  * <h1>Softre Solutions</h1>
@@ -16,9 +22,41 @@ import java.sql.Date;
  */
 
 public class TblDettaglioProduzione {
-	
+
 	public static final String TABLE_NAME = "Tbl_Dettaglio_Produzione";
-	
+
+	private static final String STMT_INSERT_DETTAGLIO = "INSERT INTO Tbl_Dettaglio_Produzione "
+			+ "           (Descrizione_prodotto "
+			+ "           ,Rif_ODP "
+			+ "           ,Rif_cliente "
+			+ "           ,Rif_codice_cliente "
+			+ "           ,Rif_ordine_cliente "
+			+ "           ,Cod_Articolo "
+			+ "           ,Scadenza "
+			+ "           ,Lotto "
+			+ "           ,Pezzi_crt "
+			+ "           ,Cartoni_plt "
+			+ "           ,Cartoni_Tot "
+			+ "           ,Pallet_Tot "
+			+ "           ,Cartoni_prodotti "
+			+ "           ,Impasti_cartone "
+			+ "           ,Esaurimento_impasto "
+			+ "           ,Cod_vaschetta "
+			+ "           ,Cod_incarto "
+			+ "           ,Cod_astuccio "
+			+ "           ,Cod_cartone "
+			+ "           ,Cod_coperchio "
+			+ "           ,Stampa_cartone "
+			+ "           ,Stampa_sacchetto "
+			+ "           ,Stampa_etichetta_astuccio "
+			+ "           ,Tipo_pallet "
+			+ "           ,Note "
+			+ "           ,Note_cartoni_parziali "
+			+ "           ,Riferimento_Tbl_Produzione "
+			+ "           ,Flag) "
+			+ "     VALUES "
+			+ "           (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+
 	protected BigInteger id;
 	protected String Descrizione_prodotto;
 	protected String Rif_ODP;
@@ -28,11 +66,11 @@ public class TblDettaglioProduzione {
 	protected String Cod_Articolo;
 	protected Date Scadenza;
 	protected String Lotto;
-	protected int Pezzi_crt;
-	protected int Cartoni_plt;
-	protected int Cartoni_Tot;
+	protected Integer Pezzi_crt;
+	protected Integer Cartoni_plt;
+	protected Integer Cartoni_Tot;
 	protected float Pallet_Tot;
-	protected int Cartoni_prodotti;
+	protected Integer Cartoni_prodotti;
 	protected BigDecimal Impasti_Cartone;
 	protected char Esaurimento_Impasto; //0 false, 1 true
 	protected String Cod_vaschetta;
@@ -48,7 +86,7 @@ public class TblDettaglioProduzione {
 	protected String Note_cartoni_parziali;
 	protected String Riferimento_Tbl_Produzione;
 	protected char Flag;
-	
+
 	public BigInteger getId() {
 		return id;
 	}
@@ -103,22 +141,22 @@ public class TblDettaglioProduzione {
 	public void setLotto(String lotto) {
 		Lotto = lotto;
 	}
-	public int getPezzi_crt() {
+	public Integer getPezzi_crt() {
 		return Pezzi_crt;
 	}
-	public void setPezzi_crt(int pezzi_crt) {
+	public void setPezzi_crt(Integer pezzi_crt) {
 		Pezzi_crt = pezzi_crt;
 	}
-	public int getCartoni_plt() {
+	public Integer getCartoni_plt() {
 		return Cartoni_plt;
 	}
-	public void setCartoni_plt(int fCartoni_plt) {
+	public void setCartoni_plt(Integer fCartoni_plt) {
 		Cartoni_plt = fCartoni_plt;
 	}
-	public int getCartoni_Tot() {
+	public Integer getCartoni_Tot() {
 		return Cartoni_Tot;
 	}
-	public void setCartoni_Tot(int cartoni_Tot) {
+	public void setCartoni_Tot(Integer cartoni_Tot) {
 		Cartoni_Tot = cartoni_Tot;
 	}
 	public float getPallet_Tot() {
@@ -127,10 +165,10 @@ public class TblDettaglioProduzione {
 	public void setPallet_Tot(float pallet_Tot) {
 		Pallet_Tot = pallet_Tot;
 	}
-	public int getCartoni_prodotti() {
+	public Integer getCartoni_prodotti() {
 		return Cartoni_prodotti;
 	}
-	public void setCartoni_prodotti(int cartoni_prodotti) {
+	public void setCartoni_prodotti(Integer cartoni_prodotti) {
 		Cartoni_prodotti = cartoni_prodotti;
 	}
 	public BigDecimal getImpasti_Cartone() {
@@ -169,7 +207,7 @@ public class TblDettaglioProduzione {
 	public void setCod_cartone(String cod_cartone) {
 		Cod_cartone = cod_cartone;
 	}
-	
+
 	public String getCod_coperchio() {
 		return Cod_coperchio;
 	}
@@ -223,6 +261,65 @@ public class TblDettaglioProduzione {
 	}
 	public void setFlag(char flag) {
 		Flag = flag;
+	}
+
+	/**
+	 * @author Daniele Signoroni 24/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 *
+	 * </p>
+	 * @param descrittoreConnessioneEsterna
+	 * @return
+	 */
+	public int esportaVersoTabellaDiFrontiera(ConnectionDescriptor descrittoreConnessioneEsterna) {
+		int rc = 0;
+		try {
+			if(descrittoreConnessioneEsterna.getConnection() != null && descrittoreConnessioneEsterna.getConnection().isClosed())
+				descrittoreConnessioneEsterna.openConnection();
+			PreparedStatement ps1 = descrittoreConnessioneEsterna.getConnection().prepareStatement(STMT_INSERT_DETTAGLIO);
+			ps1.setString(1, getDescrizione_prodotto());
+			ps1.setString(2, getRif_ODP());
+			ps1.setString(3, getRif_cliente() != null ? getRif_cliente() : "-");
+			ps1.setString(4, getRif_codice_cliente() != null ? getRif_codice_cliente() : "-");
+			ps1.setString(5, getRif_ordine_cliente() != null ? getRif_ordine_cliente() : "-");
+			ps1.setString(6, getCod_Articolo());
+			ps1.setDate(7, getScadenza());
+			ps1.setString(8, getLotto());
+			ps1.setInt(9, getPezzi_crt());
+			ps1.setInt(10, getCartoni_plt());
+			ps1.setInt(11, getCartoni_Tot());
+			ps1.setFloat(12, getPallet_Tot());
+			if(getCartoni_prodotti() != null) {
+				ps1.setInt(13,getCartoni_prodotti());
+			}else {
+				ps1.setNull(13, Types.INTEGER);
+			}
+			ps1.setBigDecimal(14, getImpasti_Cartone());
+			ps1.setString(15, String.valueOf(getEsaurimento_Impasto()));
+			ps1.setString(16, getCod_vaschetta() != null ? getCod_vaschetta() : null);
+			ps1.setString(17, getCod_incarto() != null ? getCod_incarto() : null);
+			ps1.setString(18, getCod_astuccio() != null ? getCod_astuccio() : null);
+			ps1.setString(19, getCod_cartone() != null ? getCod_cartone() : null);
+			ps1.setString(20, getCod_coperchio() != null ? getCod_coperchio() : null);
+			ps1.setString(21, getStampa_cartone() != null ? getStampa_cartone() : null);
+			ps1.setString(22, getStampa_sacchetto() != null ? getStampa_sacchetto() : null);
+			ps1.setString(23, getStampa_etichetta_astuccio() != null ? getStampa_etichetta_astuccio() : null);
+			ps1.setString(24, getTipo_pallet() != null ? getTipo_pallet() : null);
+			ps1.setString(25, getNote() != null ? getNote() : null);
+			ps1.setString(26, getNote_cartoni_parziali() != null ? getNote_cartoni_parziali() : null);
+			ps1.setString(27, getRiferimento_Tbl_Produzione() != null ? getRiferimento_Tbl_Produzione() : null);
+			ps1.setString(28, String.valueOf(getFlag()));
+			rc = ps1.executeUpdate();
+			if(rc > 0) {
+				return YOrdineEsecutivo.UPDATE_OK;
+			}else {
+				return YOrdineEsecutivo.UPDATE_KO;
+			}
+		}catch (SQLException e) {
+			e.printStackTrace(Trace.excStream);
+			return YOrdineEsecutivo.UPDATE_KO;
+		}
 	}
 
 }

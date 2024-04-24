@@ -20,6 +20,7 @@ import com.thera.thermfw.security.Authorizable;
 
 import it.biscottificio.thip.base.articolo.YArticoloCliente1;
 import it.biscottificio.thip.base.commessa.YCommessa;
+import it.biscottificio.thip.datiTecnici.modpro.YModelloProduttivo;
 import it.biscottificio.thip.magazzino.generalemag.YLottoAssResp;
 import it.biscottificio.thip.magazzino.generalemag.YLottoAssRespTM;
 import it.thera.thip.YArticoliDatiInd;
@@ -27,13 +28,11 @@ import it.thera.thip.base.articolo.Articolo;
 import it.thera.thip.base.articolo.ArticoloCliente;
 import it.thera.thip.base.articolo.ArticoloUnitaMisura;
 import it.thera.thip.base.azienda.Azienda;
-import it.thera.thip.base.generale.UnitaMisura;
 import it.thera.thip.magazzino.generalemag.Lotto;
 import it.thera.thip.nicim.base.AmbienteNICIM;
 import it.thera.thip.nicim.base.PersDatiNICIMUtils;
 import it.thera.thip.produzione.ordese.AttivitaEsecLottiPrd;
 import it.thera.thip.produzione.ordese.AttivitaEsecMateriale;
-import it.thera.thip.produzione.ordese.AttivitaEsecProdotto;
 import it.thera.thip.produzione.ordese.OrdineEsecutivo;
 import it.thera.thip.produzione.ordese.OrdineEsecutivoTM;
 
@@ -87,7 +86,7 @@ public class YExpOrdiniEsecutivi extends BatchRunnable implements Authorizable {
 		return isOk;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked" })
 	protected boolean runEsportazione() {
 		output.println(" --> ...Estraggo gli ordini da esportare verso il MES ");
 
@@ -138,6 +137,11 @@ public class YExpOrdiniEsecutivi extends BatchRunnable implements Authorizable {
 								if(lottiProdottiOk) {
 									//popolo la lista dei tbl dettagli
 									TblDettaglioProduzione dettaglio = creaTblDettaglio(ordine,ordinePadre,idLotto);
+									if(dettaglio != null) {
+										tblsDettagli.add(dettaglio);
+									}else {
+										//scadenza non trovata quindi errore
+									}
 								}else {
 									output.println(" ** Attenzione, l'ordine ha prodotto con lotto dummy...non puo' essere quindi esportato ");
 									//considero entrambi gli ordini come da non processare
@@ -170,9 +174,107 @@ public class YExpOrdiniEsecutivi extends BatchRunnable implements Authorizable {
 			output.println(" Ho finito di processare l'ordine esecutivo : {"+ordine.getKey()+"} --->");
 			output.println();
 		}
+
+		//se ho dettagli allora processo gli impasti
+		if(tblsDettagli.size() > 0) {
+			Iterator<YOrdineEsecutivo> iterImpasti = impastiDaProcessare.iterator();
+			while(iterImpasti.hasNext()) {
+				YOrdineEsecutivo ordineImpasto = iterImpasti.next();
+				if(!ordinDaNonProcessare.containsKey(ordineImpasto.getKey())) { //altrimenti il padre non e' da processare
+					TblProduzione tbl = creaTblTestata(ordineImpasto,tblsDettagli);
+					if(tbl != null) {
+						tblsProduzione.add(tbl);
+					}
+				}
+			}
+		}
+
+		if(tblsDettagli.size() > 0 && tblsProduzione.size() > 0) {
+			output.println(" --> Inizio l'esportazione dei dati verso le tabelle di frontiera ");
+			//ora esportiamoli di la
+			//e poi flagghiamo l'ordine come esportato
+			//consideriamo commit finale pero'
+			boolean commit = true;
+			for(TblProduzione testata : tblsProduzione) {
+				output.println();
+				YOrdineEsecutivo ordine = (YOrdineEsecutivo) YOrdineEsecutivo.recuperaOrdineEsecutivoDaNumeroFMT(testata.getRif_ODP());
+				output.println(" <--- Processo l'ordine esecutivo : {"+ordine.getKey()+"}");
+				int rc = testata.esportaVersoTabellaDiFrontiera(descrittoreConnessioneEsterna);
+				if(rc == YOrdineEsecutivo.UPDATE_OK) {
+					rc = ordine.aggiornaStatoIndustriaNoSave(YOrdineEsecutivo.ESPORTATO);
+					if(rc == YOrdineEsecutivo.UPDATE_KO) {
+						commit = false;
+						output.println(" ** Qualcosa e' andato storto nell'update dello stato industria 4.0 dell'ordine... ");
+					}
+				}else {
+					commit = false;
+					output.println(" ** Qualcosa e' andato storto nell'esportazione dei dati verso le tabelle di frontiera... ");
+				}
+				output.println(" Ho finito di processare l'ordine esecutivo : {"+ordine.getKey()+"} --->");
+				output.println();
+			}
+			try {
+				if(commit) {
+					output.println("--> Procedo con la commit sui due connection descriptor ");
+
+					descrittoreConnessioneEsterna.getConnection().commit();
+					ConnectionManager.commit();
+
+				}else {
+					ConnectionManager.rollback();
+					output.println("Rilascio la connessione : \n "+descrittoreConnessioneEsterna.toString());
+					//rilascio la connessione
+					descrittoreConnessioneEsterna.closeConnection();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace(Trace.excStream);
+			}
+		}
 		return false;
 	}
 
+	protected TblProduzione creaTblTestata(YOrdineEsecutivo ordineImpasto, List<TblDettaglioProduzione> tblsDettagliTotale) {
+		TblProduzione testata = (TblProduzione) Factory.createObject(TblProduzione.class);
+		testata.setDataOra(ordineImpasto.getDataOrdine());
+		testata.setTurno(null);
+		testata.setLotto("P" + ordineImpasto.getIdAnnoOrdine().substring(2,4) + ordineImpasto.getIdNumeroOrdine());
+		testata.setCodArticolo(ordineImpasto.getIdArticolo());
+		String descrizione = ordineImpasto.getArticolo().getDescrizioneArticoloNLS().getDescrizioneEstesa() != null ? ordineImpasto.getArticolo().getDescrizioneArticoloNLS().getDescrizioneEstesa() : ordineImpasto.getArticolo().getDescrizioneArticoloNLS().getDescrizione();
+		if(descrizione.length() > 100) {
+			descrizione = descrizione.substring(0,100);
+		}
+		testata.setDescImpasto(descrizione);
+		if(ordineImpasto.getModelloProduttivo() != null) { 
+			//il campo personalizzato NUM_RICETTA
+			testata.setRicetta(((YModelloProduttivo)ordineImpasto.getModelloProduttivo()).getNumeroRicetta() != null ? ((YModelloProduttivo)ordineImpasto.getModelloProduttivo()).getNumeroRicetta() : 0);
+		}
+		testata.setCodImpasto(ordineImpasto.getIdArticolo());
+		List<TblDettaglioProduzione> dettagli = TblProduzione.searchDettagliByRifTblProduzione(tblsDettagliTotale, ordineImpasto.getNumeroOrdFmt());
+		if(dettagli.size() > 0){
+			testata.setDettagli(dettagli);
+			testata.setQtCartoni(testata.getSommaQuantitaCartoniDettagli(TblDettaglioProduzione::getCartoni_Tot));
+		}else {
+			//se non ci sono dettagli c'e' qualcosa che non va
+			return null;
+		}
+		testata.setQtCartoniProdotti(null);
+		testata.setKgImpasto(ordineImpasto.getSommaKgMaterialiImpasto());
+		testata.setRif_ODP(ordineImpasto.getNumeroOrdFmt());
+		testata.setFlag(TblProduzione.DA_PRODURRE);
+		return testata;
+	}
+
+	/**
+	 * @author Daniele Signoroni 24/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * Ritorna il dettaglio di produzione che verra' poi inserito nelle tabelle di frontiera.<br>
+	 * </p>
+	 * @param ordine
+	 * @param ordinePadre
+	 * @param idLotto il lotto del prodotto
+	 * @return un istanza di {@linkplain TblDettaglioProduzione}
+	 */
 	protected TblDettaglioProduzione creaTblDettaglio(YOrdineEsecutivo ordine, OrdineEsecutivo ordinePadre, String idLotto) {
 		TblDettaglioProduzione dettaglio = (TblDettaglioProduzione) Factory.createObject(TblDettaglioProduzione.class);
 		String descrizione = ordine.getArticolo().getDescrizioneArticoloNLS().getDescrizioneEstesa() != null ? ordine.getArticolo().getDescrizioneArticoloNLS().getDescrizioneEstesa() : ordine.getArticolo().getDescrizioneArticoloNLS().getDescrizione();
@@ -181,7 +283,7 @@ public class YExpOrdiniEsecutivi extends BatchRunnable implements Authorizable {
 		}
 		dettaglio.setDescrizione_prodotto(descrizione);
 		dettaglio.setRif_ODP(ordine.getNumeroOrdFmt());
-		dettaglio.setRif_cliente(ordine.getCliente().getRagioneSociale());
+		dettaglio.setRif_cliente(ordine.getCliente() != null ? ordine.getCliente().getRagioneSociale() : null);
 		dettaglio.setRif_codice_cliente(ordine.getIdCliente());
 		dettaglio.setRif_ordine_cliente(KeyHelper.formatKeyString(ordine.getOrdineVenditaRigaKey())); //formattato con il video separator		
 		dettaglio.setCod_Articolo(ordine.getIdArticolo());
@@ -211,6 +313,8 @@ public class YExpOrdiniEsecutivi extends BatchRunnable implements Authorizable {
 		dettaglio.setCod_cartone(YOrdineEsecutivo.getIdArticoloDaTipologiaTraMateriali(ordinePadre, YArticoliDatiInd.CARTONE));
 		dettaglio.setCod_coperchio(YOrdineEsecutivo.getIdArticoloDaTipologiaTraMateriali(ordinePadre, YArticoliDatiInd.COPERCHIO));
 		dettaglio.setRiferimento_Tbl_Produzione(ordinePadre.getNumeroOrdFmt());
+		dettaglio.setFlag(TblProduzione.DA_PRODURRE);
+		dettaglio.setEsaurimento_Impasto(ordine.isYcontEsaurImp() ? '1' : '0');
 		return dettaglio;
 	}
 
