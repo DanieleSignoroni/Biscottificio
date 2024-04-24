@@ -26,7 +26,7 @@ public class TblProduzione {
 	public static final char TERMINATO = '3';
 	public static final char IMPORTATO_A_GESTIONALE = '4';
 	public static final char ANNULLATO = 'X';
-	
+
 	public static final String TABLE_NAME = "Tbl_Produzione";
 
 	protected BigInteger id;
@@ -48,7 +48,7 @@ public class TblProduzione {
 	public TblProduzione() {
 		dettagli = new ArrayList<TblDettaglioProduzione>();
 	}
-	
+
 	public BigInteger getId() {
 		return id;
 	}
@@ -137,23 +137,27 @@ public class TblProduzione {
 	public void setDettagli(List<TblDettaglioProduzione> dettagli) {
 		this.dettagli = dettagli;
 	}
-	
+
 	/**
 	 * @author Daniele Signoroni 23/04/2024
 	 * <p>
 	 * Prima stesura.<br>
 	 * Ritorna la somma degli impasti cartone del dettaglio di una testata.<br>
+	 * La somma e' data da (impasti_cartone * cartoni_prodotti).<br>
 	 * </p>
-	 * @return
+	 * @return il totale > 0 se ci sono dettagli, altrimenti 0
 	 */
 	public BigDecimal getSommaImpastiCartoneDettaglio() {
 		BigDecimal val = BigDecimal.ZERO;
 		for(TblDettaglioProduzione dettaglio : getDettagli()) {
 			if(dettaglio.getImpasti_Cartone() != null) {
-				val = val.add(dettaglio.getImpasti_Cartone());
+				BigDecimal impastiCartone = dettaglio.getImpasti_Cartone();
+				BigDecimal cartoniProdotti = new BigDecimal(dettaglio.getCartoni_prodotti());
+				BigDecimal tot = impastiCartone.multiply(cartoniProdotti);
+				val = val.add(tot);
 			}
 		}
 		return val;
 	}
-	
+
 }

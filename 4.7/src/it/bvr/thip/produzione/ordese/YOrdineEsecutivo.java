@@ -1,5 +1,7 @@
 package it.bvr.thip.produzione.ordese;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,14 +11,19 @@ import java.util.Vector;
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.common.BaseComponentsCollection;
 import com.thera.thermfw.common.ErrorMessage;
+import com.thera.thermfw.persist.CachedStatement;
+import com.thera.thermfw.persist.ConnectionManager;
 import com.thera.thermfw.persist.CopyException;
 import com.thera.thermfw.persist.Copyable;
+import com.thera.thermfw.persist.Database;
 import com.thera.thermfw.persist.Factory;
 import com.thera.thermfw.persist.KeyHelper;
+import com.thera.thermfw.persist.PersistentObject;
 import com.thera.thermfw.persist.Proxy;
 
 import it.biscottificio.thip.base.commessa.YCommessa;
 import it.thera.thip.YArticoliDatiInd;
+import it.thera.thip.base.azienda.Azienda;
 import it.thera.thip.produzione.ordese.AttivitaEsecMateriale;
 import it.thera.thip.produzione.ordese.AttivitaEsecutiva;
 import it.thera.thip.produzione.ordese.OrdineEsecutivo;
@@ -38,6 +45,17 @@ import it.thera.thip.produzione.ordese.OrdineEsecutivoTM;
  */
 public class YOrdineEsecutivo extends OrdineEsecutivo {
 
+	public static final int UPDATE_OK =  1;
+	public static final int UPDATE_KO = -100;
+
+	protected static String STMT_UPD_STATO_INDUSTRIA = "UPDATE "+YOrdineEsecutivoTM.TABLE_NAME_EXT+" "
+			+ "SET "+YOrdineEsecutivoTM.YSTATOINDUSTRIA+" = ? "
+			+ "WHERE "+YOrdineEsecutivoTM.ID_AZIENDA+" = ? "
+			+ "AND "+YOrdineEsecutivoTM.ID_ANNO_ORD+" = ? "
+			+ "AND "+YOrdineEsecutivoTM.ID_NUMERO_ORD+" = ? ";
+
+	protected static CachedStatement csUpdtStatoIndustria = new CachedStatement(STMT_UPD_STATO_INDUSTRIA);
+
 	//YStatoIndustria --> Attribute.Ref = Ystatoindustria4.0
 	public static final char DA_ESPORTARE = '0';
 	public static final char ESPORTATO = '1';
@@ -45,9 +63,9 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 
 	protected char iYstatoindustria = DA_ESPORTARE;
 	protected boolean iYcontEsaurImp;
-	
+
 	protected boolean isInCopia = false;
-	
+
 	protected Proxy iSpecificaProduzione = new Proxy(it.bvr.thip.produzione.ordese.YAnagrSpecProd.class);
 
 	public static final String BISC_00002 = "BISC_00002";
@@ -140,7 +158,7 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 		String objIdSpecificaProduzione = KeyHelper.getTokenObjectKey(key,2);
 		return KeyHelper.stringToIntegerObj(objIdSpecificaProduzione);
 	}
-	
+
 	public boolean isInCopia() {
 		return isInCopia;
 	}
@@ -282,8 +300,158 @@ public class YOrdineEsecutivo extends OrdineEsecutivo {
 		return materiali;
 	}
 
+	/**
+	 * @author Daniele Signoroni 24/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * Si occupa di ritornare il primo materiale impasto tra quelli presenti nell'ordine esecutivo
+	 * </p>
+	 * @param ordine
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public static AttivitaEsecMateriale getPrimoArticoloImpastoTraMateriali(OrdineEsecutivo ordine) {
+		List attivitaList = ordine.getAttivitaEsecutive();
+		if (attivitaList.size() >= 1) {
+			for (int i = 0; i < attivitaList.size(); i++) {
+				List materialiList = ((AttivitaEsecutiva) attivitaList.get(i)).getMateriali();
+				for(int j = 0; j < materialiList.size(); j++) {
+					AttivitaEsecMateriale materiale = (AttivitaEsecMateriale) materialiList.get(j);
+					YArticoliDatiInd estensione = YArticoliDatiInd.recuperaEstensioneArticolo(materiale.getIdAzienda(), materiale.getIdArticolo());
+					if(estensione != null && estensione.getTipologiaArticolo() == YArticoliDatiInd.IMPASTO) {
+						return materiale;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @author Daniele Signoroni 24/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * Si occupa di ritornare il codice articolo che corrisponde alla tipologia passata.<br>
+	 * </p>
+	 * @param ordine
+	 * @param tipologiaArticolo
+	 * @return idArticolo se c'e' un match altrimenti null
+	 */
+	@SuppressWarnings("rawtypes")
+	public static String getIdArticoloDaTipologiaTraMateriali(OrdineEsecutivo ordine, char tipologiaArticolo) {
+		List attivitaList = ordine.getAttivitaEsecutive();
+		if (attivitaList.size() >= 1) {
+			for (int i = 0; i < attivitaList.size(); i++) {
+				List materialiList = ((AttivitaEsecutiva) attivitaList.get(i)).getMateriali();
+				for(int j = 0; j < materialiList.size(); j++) {
+					AttivitaEsecMateriale materiale = (AttivitaEsecMateriale) materialiList.get(j);
+					YArticoliDatiInd estensione = YArticoliDatiInd.recuperaEstensioneArticolo(materiale.getIdAzienda(), materiale.getIdArticolo());
+					if(estensione != null && estensione.getTipologiaArticolo() == tipologiaArticolo) {
+						return materiale.getIdArticolo();
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @author Daniele Signoroni 24/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * Ritorna una lista di ordini esecutivi da esportare verso le tabelle del MES.<br>
+	 * </p>
+	 * @return
+	 */
+	public static List<YOrdineEsecutivo> estraiOrdiniEsecutiviDaEsportareMES(){
+		List<YOrdineEsecutivo> ordini = new ArrayList<YOrdineEsecutivo>();
+		String select = "SELECT "+YOrdineEsecutivoTM.ID_AZIENDA+","+YOrdineEsecutivoTM.ID_ANNO_ORD+","+YOrdineEsecutivoTM.ID_NUMERO_ORD+" ";
+		String from = "FROM "+YOrdineEsecutivoTM.TABLE_NAME_EXT+" ";
+		String where = "WHERE "+YOrdineEsecutivoTM.ID_AZIENDA+" = '"+Azienda.getAziendaCorrente()+"' "
+				+ " AND "+YOrdineEsecutivoTM.YSTATOINDUSTRIA+" = '"+DA_ESPORTARE+"' ";
+		CachedStatement cs = null;
+		ResultSet rs = null;
+		List<String> keys = new ArrayList<String>();
+		try {
+			cs = new CachedStatement(select+from+where);
+			rs = cs.executeQuery();
+			while(rs.next()) {
+				keys.add(KeyHelper.buildObjectKey(new String[] {
+						rs.getString(YOrdineEsecutivoTM.ID_AZIENDA),
+						rs.getString(YOrdineEsecutivoTM.ID_ANNO_ORD),
+						rs.getString(YOrdineEsecutivoTM.ID_NUMERO_ORD)
+				}));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace(Trace.excStream);
+		}finally {
+			try {
+				if(cs != null) {
+					cs.free();
+				}
+				if(rs != null) {
+					rs.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace(Trace.excStream);
+			}
+		}
+		for(String key : keys) {
+			try {
+				ordini.add((YOrdineEsecutivo) YOrdineEsecutivo.elementWithKey(YOrdineEsecutivo.class, key, PersistentObject.NO_LOCK));
+			} catch (SQLException e) {
+				e.printStackTrace(Trace.excStream);
+			}
+		}
+		return ordini;
+
+	}
+
 	public void setEqual(Copyable obj) throws CopyException {
 		super.setEqual(obj);
+	}
+
+	/**
+	 * @author Daniele Signoroni 24/04/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 * Si occupa di aggiornare il campo {@value YOrdineEsecutivoTM#YSTATOINDUSTRIA} a database.<br>
+	 * </p>
+	 * @param statoIndustria uno dei valori dell'enumerato Ystatoindustria4.0
+	 * @return {@value #UPDATE_OK} se tutto ok, {@value #UPDATE_KO} se qualcosa e' andato storto
+	 * @throws IllegalArgumentException se e' stato passato un char che non rientra nei valori del riferimento attributo
+	 */
+	public int aggiornaStatoIndustriaNoSave(char statoIndustria) throws IllegalArgumentException {
+		if(statoIndustria == DA_ESPORTARE || statoIndustria == DA_NON_ESPORTARE || statoIndustria == ESPORTATO) {
+			PreparedStatement ps = null;
+			try {
+				ps = csUpdtStatoIndustria.getStatement();
+				Database db = ConnectionManager.getCurrentDatabase();
+
+				db.setString(ps, 1, String.valueOf(statoIndustria));                             
+				db.setString(ps, 2, getIdAzienda());                        		    
+				db.setString(ps, 3, getIdAnnoOrdine());        
+				db.setString(ps, 4, getIdNumeroOrdine());      
+
+				if (ps.executeUpdate() >= 0)
+					return UPDATE_OK;
+
+
+			}catch (SQLException e) {
+				e.printStackTrace(Trace.excStream);
+			}finally {
+				if(ps != null) {
+					try {
+						ps.close();
+					} catch (SQLException e) {
+						e.printStackTrace(Trace.excStream);
+					}
+				}
+			}
+		}else {
+			throw new IllegalArgumentException("Riferimento attributo Ystatoindustria4.0: Valore \"" + statoIndustria + "\" non trovato."); 
+		}
+		return UPDATE_KO;
 	}
 
 }

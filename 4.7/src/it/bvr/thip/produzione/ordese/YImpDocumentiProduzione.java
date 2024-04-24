@@ -1,6 +1,5 @@
 package it.bvr.thip.produzione.ordese;
 
-import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -126,7 +125,7 @@ public class YImpDocumentiProduzione extends BatchRunnable implements Authorizab
 						nicCons.setIdRigaOrdine(0);
 						nicCons.setDataRegistrazione(testata.getDataOra());
 						nicCons.setQuantita(testata.getSommaImpastiCartoneDettaglio().doubleValue()); //non so pk lo vuole double ma ok
-						nicCons.setTempoMacchina(BigDecimal.ONE);
+						//nicCons.setTempoMacchina(BigDecimal.ONE);
 						nicCons.setIdProgressivo(nicCons.getNuovoProgressivo());
 						double zero = 0;
 						nicCons.setQuantitaScarto(zero);
@@ -142,7 +141,7 @@ public class YImpDocumentiProduzione extends BatchRunnable implements Authorizab
 								ConnectionManager.commit();
 							}else {
 								output.println(" ** Impossibile updatare il Flag per il TBL con ID = "+testata.getId());
-								
+
 								ConnectionManager.rollback();
 							}
 						}else {
